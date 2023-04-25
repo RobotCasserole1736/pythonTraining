@@ -24,7 +24,6 @@ Some 3rd-party vendor resources:
 
 [Click here to go to the lesson](https://colab.research.google.com/github/RobotCasserole1736/pythonTraining/blob/main/pythonToRobot.ipynb)
 
-
 ## Step 3 - Intermediate Python
 
-[Click here to go to the lesson](https://colab.research.google.com/github/RobotCasserole1736/pythonTraining/blob/main/intermedeatePython.ipynb)
+[Click here to go to the lesson](https://colab.research.google.com/github/RobotCasserole1736/pythonTraining/blob/main/intermediatePython.ipynb)
