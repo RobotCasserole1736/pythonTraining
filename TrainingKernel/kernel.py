@@ -1,10 +1,12 @@
-import ast
+import os
+import subprocess
 import debugpy
-import inspect
 from ipykernel.kernelbase import Kernel
-import wpilib
 
-debugMe=True
+rootDir = "TrainingKernel/tmpRobot"
+
+
+debugMe=False
 if(debugMe):
     # 5678 is the default attach port in the VS Code debug configurations. Unless a host and port are specified, host defaults to 127.0.0.1
     debugpy.listen(5678) # ensure that this port is the same as the one in your launch.json
@@ -12,6 +14,51 @@ if(debugMe):
     debugpy.wait_for_client()
     debugpy.breakpoint()
     print("Attached!")
+    
+
+def adjust_indentation(code):
+    lines = code.split('\n')
+    first_line_indentation = len(lines[0]) - len(lines[0].lstrip())
+
+    adjusted_lines = [' ' * 4 + line[first_line_indentation:] for line in lines]
+
+    return '\n'.join(adjusted_lines)
+
+class UserRobotRunner:
+    def __init__(self):
+        self.process = None
+
+    def start(self):
+        if self.is_running():
+            # Process is already running
+            return
+
+        self.process = subprocess.Popen(
+            "start cmd /C \"python robot.py sim || pause\"",  
+            universal_newlines=True,
+            shell=True,
+            cwd = rootDir,
+            #creationflags = subprocess.CREATE_NEW_CONSOLE
+        )
+
+    def stop(self):
+        if self.is_running():
+            self.process.terminate()
+            self.process.wait()
+
+    def monitor(self):
+        if self.is_running():
+            # Read stdout and stderr
+            stdout = self.process.stdout.readline()
+            stderr = self.process.stderr.readline()
+
+            if stdout:
+                print('STDOUT:', stdout.strip())
+            if stderr:
+                print('STDERR:', stderr.strip())
+
+    def is_running(self):
+        return self.process and self.process.poll() is None
 
 class TrainingKernel(Kernel):
     implementation = 'RobotPy Training'
@@ -24,76 +71,30 @@ class TrainingKernel(Kernel):
         'file_extension': '.py',
     }
     banner = "RobotPy Training Kernel Client"
+    
+    userCode = UserRobotRunner()
 
     def do_execute(self, code, silent, store_history=True, user_expressions=None,
                    allow_stdin=False):
         
         
         if not silent:
-            response = ""
-            errors = False
-
-            # Clear the incoming function names
-            try:
-                self.robotInit = None
-            except NameError:
-                pass
-
-            try:
-                self.robotPeriodic = None
-            except NameError:
-                pass
-
-            # evaluate the incoming code
-            initBodyFound = False
-            periodicBodyFound = False
-
-            tree = ast.parse(code)
-            exec_exprs = []
-            for module in tree.body:
-                exec_exprs.append(module)
-                if(module.name == "robotInit"):
-                    initBodyFound = True
-                if(module.name == "robotPeriodic"):
-                    periodicBodyFound = True
-            exec_expr = ast.Module(exec_exprs, type_ignores=[])
-            exec(compile(exec_expr, 'file', 'exec'), self.__dict__)
-
-            # read back the code contents and report it to the user.
-            try:
-                if(self.robotInit is not None):
-                    initCodeStr = inspect.getsource(self.robotInit)
-                else:
-                    response += "You not provide a robotInit Function!\n"
-                    initCodeStr = "pass"
-            except Exception as e:
-                response += "Couldn't evaluate the robotInit code: \n"
-                response += str(e)
-                response += "\n"
-                errors = True
-
-            try:
-                if(self.robotPeriodic is not None):
-                    periodicCodeStr = inspect.getsource(self.robotPeriodic)
-                else:
-                    response += "You not provide a robotPeriodic Function!\n"
-                    periodicCodeStr = "pass"
-            except Exception as e:
-                response += "Couldn't evaluate the robotPeriodic code: \n"
-                response += str(e)
-                response += "\n"
-                errors = True
             
-            if(not errors):
-                response += "Running robot with the following code:\n\n"
-                response += "def robotInit():\n"
-                response += initCodeStr
-                response += "\n"
-                response += "def robotPeriodic():\n"
-                response += periodicCodeStr
-            else:
-                response += "Errors present, not launching robot."
-
+            code = adjust_indentation(code)
+            
+            with open("TrainingKernel/robot.py_tmplt", "r") as robotPyTmplt:
+                
+                if(not os.path.isdir(rootDir)):
+                    os.makedirs(rootDir)
+                    
+                with open(os.path.join(rootDir, "robot.py"), "w") as outFile:
+                    for line in robotPyTmplt:
+                        outFile.write(line.replace("${USER_CODE}", code))
+                        
+                    self.userCode.start()
+                
+            response = "Running robot with the following code:\n\n"
+            response += code
 
             stream_content = {'name': 'stdout', 'text': response}
             self.send_response(self.iopub_socket, 'stream', stream_content)
