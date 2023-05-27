@@ -27,3 +27,17 @@ Some 3rd-party vendor resources:
 ## Step 3 - Intermediate Python
 
 [Click here to go to the lesson](https://colab.research.google.com/github/RobotCasserole1736/pythonTraining/blob/main/intermediatePython.ipynb)
+
+## Step 4 - WPILib Training
+
+This has to be run locally on your computer, it won't work online.
+
+First, from the start menu, launch a `cmd` console and run the following:
+
+`pip install notebook`
+
+If you haven't yet, clone this repo onto your computer.
+
+Open another cmd in that repo.
+
+To start the training, run the `launchTraining.bat` . The training should pop up in a web browser.
