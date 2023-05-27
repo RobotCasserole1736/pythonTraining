@@ -31,7 +31,7 @@ class UserRobotRunner:
     def start(self):
         if self.is_running():
             # Process is already running
-            return
+            self.stop()
 
         self.process = subprocess.Popen(
             "start cmd /C \"python robot.py sim || pause\"",  
@@ -45,17 +45,6 @@ class UserRobotRunner:
         if self.is_running():
             self.process.terminate()
             self.process.wait()
-
-    def monitor(self):
-        if self.is_running():
-            # Read stdout and stderr
-            stdout = self.process.stdout.readline()
-            stderr = self.process.stderr.readline()
-
-            if stdout:
-                print('STDOUT:', stdout.strip())
-            if stderr:
-                print('STDERR:', stderr.strip())
 
     def is_running(self):
         return self.process and self.process.poll() is None
@@ -76,7 +65,6 @@ class TrainingKernel(Kernel):
 
     def do_execute(self, code, silent, store_history=True, user_expressions=None,
                    allow_stdin=False):
-        
         
         if not silent:
             
