@@ -1,7 +1,9 @@
 # pythonTraining
 Basic software team training for Python
 
-## Documentation
+## Key Links
+
+The following are links you should be aware of while starting training.
 
 The [main RobotPy docs](https://robotpy.readthedocs.io/projects/pyfrc/en/stable/index.html) should be referenced for python-specific information.
 
